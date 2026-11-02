@@ -49,7 +49,8 @@ function friendlyError(error: unknown): string {
     }
     return `OpenAI returned an error (${error.status ?? "unknown"}). Please try again.`;
   }
-  if (error instanceof OpenAI.OpenAIError && /api key/i.test(error.message)) {
+  // A missing key is thrown as a plain Error (not an APIError), so match on the message.
+  if (error instanceof Error && /missing credentials|api[ _]?key/i.test(error.message)) {
     return "No OpenAI API key found. Add OPENAI_API_KEY to .env.local and restart the dev server.";
   }
   return "Something went wrong while reviewing your resume. Please try again.";
