@@ -51,14 +51,20 @@ Next.js (App Router), TypeScript, Tailwind CSS, OpenAI API.
 ## Architecture
 ```
 Browser (one page: React + Tailwind)
-   │  form data: resume file + job description text
+   │ 1. resume file
    ▼
-Next.js route handler  /api/review
-   ├─ parse file → text   (pdf: unpdf / pdf-parse, docx: mammoth)
+/api/parse   → PDF (unpdf) or DOCX (mammoth) → { text }
+   │    text is shown in the left pane so the user can check or fix it
+   │    (pasted resume text skips this step entirely)
+   │ 2. resume text + job description text
+   ▼
+/api/review
    ├─ OpenAI call(s) using structured JSON output, checked with zod
    ├─ computeScore() — plain TypeScript
    └─ return one JSON result
 ```
+Splitting parsing from review means the review route only ever deals with text,
+so uploaded and pasted resumes go through exactly the same path.
 
 ## Privacy
 - The OpenAI key stays on the server in `.env.local` and is never sent to the browser.
