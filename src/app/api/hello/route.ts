@@ -1,10 +1,13 @@
-import OpenAI from "openai";
-
-const client = new OpenAI();
+import { connection } from "next/server";
+import { getOpenAI, MODEL } from "@/lib/openai";
 
 export async function GET() {
-    const response = await client.responses.create({
-        model: "gpt-4.1-mini",
+    // This Next.js version prerenders GET routes at build time unless told otherwise.
+    // connection() says "wait for a real request", so OpenAI is called on each visit.
+    await connection();
+
+    const response = await getOpenAI().responses.create({
+        model: MODEL,
         input: "Say hello to Reviewsume in one short sentence.",
     });
 
