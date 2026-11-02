@@ -25,7 +25,13 @@ export async function POST(request: Request) {
     return Response.json(result);
   } catch (error) {
     console.error("Review failed:", error);
-    return Response.json({ error: friendlyError(error) }, { status: 502 });
+    let message = friendlyError(error);
+    // While developing (npm run dev), also show the real error on the page to make debugging easier.
+    // `next build` / `next start` set NODE_ENV to "production", so users never see these details.
+    if (process.env.NODE_ENV === "development" && error instanceof Error) {
+      message += ` [dev details: ${error.name}: ${error.message}]`;
+    }
+    return Response.json({ error: message }, { status: 502 });
   }
 }
 
