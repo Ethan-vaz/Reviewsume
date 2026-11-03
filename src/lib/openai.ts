@@ -1,3 +1,6 @@
+// Safety rail: if a browser ("use client") file ever imports this file,
+// the build fails instead of shipping OpenAI code toward the browser.
+import "server-only";
 import OpenAI from "openai";
 
 // Change the model in .env.local with OPENAI_MODEL=... if you want to try another one.
