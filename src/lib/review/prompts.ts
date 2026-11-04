@@ -15,7 +15,7 @@ Return:
 - jobTitle: the role's title as written in the posting.
 - mustHaveSkills: skills, technologies, qualifications and experience the posting states or clearly implies are required (e.g. "required", "must have", "X+ years of", items under "Requirements" or "Qualifications"). If the posting doesn't separate required from preferred, treat its listed qualifications as must-have.
 - niceToHaveSkills: items described as preferred, a bonus, a plus, or nice to have.
-- keywords: terms an applicant tracking system (ATS) would likely scan for: tools, technologies, methodologies, domain terms, certifications. Copy the exact wording used in the posting.
+- keywords: concrete terms an applicant tracking system (ATS) would scan for: programming languages, frameworks, tools, platforms, methodologies, certifications and degree names. Write each keyword as 1–3 words, the way it would appear on a resume, e.g. "Kotlin", "Android Studio", "REST APIs", "Agile", "unit testing". Split combined terms ("Kotlin/Java" becomes "Kotlin" and "Java"). Do not include soft skills, job titles or descriptive phrases such as "screen size adaptation" or "feedback iteration".
 
 Rules:
 - Write each skill as a short noun phrase of 1–4 words, e.g. "React", "REST APIs", "stakeholder communication", "3+ years of Python".
@@ -51,6 +51,8 @@ Flag a bullet as weak when it has one or both of these issues:
 
 Do not flag bullets that are already specific and relevant. If none are weak, return an empty list.
 
+Bullets from unrelated jobs (e.g. retail, hospitality) are fine to keep on a resume. Only flag them as "off-target" when they hide a genuinely relevant skill that could be brought out honestly (e.g. using software, working with data, troubleshooting, training others). Pay most attention to bullets from relevant experience and projects.
+
 For every flagged bullet return:
 - original: the bullet copied exactly as it appears in the resume, without the bullet symbol.
 - issues: "vague", "off-target", or both.
@@ -61,6 +63,8 @@ Honesty rules for rewrites (most important):
 - Never invent numbers, metrics, team sizes, technologies or outcomes that are not in the resume.
 - Where a number would make the bullet stronger, insert a placeholder in square brackets for the person to fill in, e.g. "[X%]", "[N users]", "[timeframe]".
 - Only mention a tool or skill if the resume suggests the person used it. Otherwise use a placeholder such as "[tool]".
+
+The rewrite must itself be specific: describe what was actually done and its result. Never use filler such as "demonstrating", "showcasing", "illustrating", "skills transferable to" or "applicable to software development".
 
 ${DATA_NOTE}
 `.trim();
