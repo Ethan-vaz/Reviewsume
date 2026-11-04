@@ -17,6 +17,7 @@ import {
   type SkillResult,
   type WeakBullet,
 } from "./schemas";
+import { computeScore } from "./score";
 
 // ─────────────────────────────────────────────────────────────
 // The one function the API route calls
@@ -46,6 +47,7 @@ export async function reviewResume(
     skills,
     keywords: matchKeywords(requirements.keywords, resumeText),
     weakBullets,
+    score: computeScore(skills),
   };
 }
 

@@ -91,4 +91,5 @@ export type ReviewResult = {
   skills: SkillResult[];
   keywords: KeywordResult[];
   weakBullets: WeakBullet[];
+  score: number;
 };
