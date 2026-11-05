@@ -2,7 +2,7 @@
 
 **Check your resume against a job posting.** Upload your resume, paste a job description, and get a match score, a to-do list of missing skills, rewrites for weak bullet points and the keywords an applicant tracking system will look for.
 
-![Reviewsume showing a match score, the to-do list and result tabs](docs/screenshots/results.png)
+![Reviewsume showing a match score, the to-do list and result tabs](docs/images/Results.png)
 
 ## Features
 
@@ -14,7 +14,7 @@
 
 | Weak bullet rewrites | Keyword check |
 |---|---|
-| ![Weak bullets tab showing original bullets next to rewrites](docs/screenshots/bullets.png) | ![Keywords tab showing missing and present keywords](docs/screenshots/keywords.png) |
+| ![Weak bullets tab showing original bullets next to rewrites](docs/images/Bullets.png) | ![Keywords tab showing missing and present keywords](docs/images/keywords.png) |
 
 ## How it works
 

@@ -27,7 +27,7 @@ export default function ResultTabs({ result }: ResultTabsProps) {
 
   return (
     <div>
-      <div className="flex overflow-x-auto border-b border-zinc-200 dark:border-zinc-700" role="tablist">
+      <div className="flex overflow-x-auto overflow-y-hidden border-b border-zinc-200 dark:border-zinc-700" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
