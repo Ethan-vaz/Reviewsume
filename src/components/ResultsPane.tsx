@@ -1,3 +1,4 @@
+import ResultTabs from "@/components/ResultTabs";
 import ScoreRing from "@/components/ScoreRing";
 import type { ReviewResult } from "@/lib/review/schemas";
 
@@ -50,7 +51,7 @@ export default function ResultsPane({ result, error, analyzing }: ResultsPanePro
         </p>
       </div>
 
-      {/* Tabs (To-do · Weak bullets · Keywords) come in 5.5 */}
+      <ResultTabs result={result} />
     </div>
   );
 }
