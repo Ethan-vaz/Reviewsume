@@ -113,6 +113,10 @@ export default function InputPane({
       >
         {analyzing ? "Analyzing…" : "Analyze"}
       </button>
+      <p className="text-xs text-zinc-500">
+        🔒 Reviewsume doesn&apos;t save anything. Your resume and the job description are sent to
+        OpenAI only to generate this review.
+      </p>
     </div>
   );
 }

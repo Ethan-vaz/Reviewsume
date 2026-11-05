@@ -6,7 +6,6 @@ import ResultsPane from "@/components/ResultsPane";
 import type { ReviewResult } from "@/lib/review/schemas";
 
 export default function Home() {
-  // Shared data: the input pane edits it, and Analyze (5.3) will send it.
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
     const [result, setResult] = useState<ReviewResult | null>(null);

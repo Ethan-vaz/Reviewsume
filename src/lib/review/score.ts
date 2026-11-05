@@ -1,7 +1,6 @@
 import type { SkillResult } from "./schemas";
 
 export function computeScore(skills: SkillResult[]): number {
-  // your code here
   const mustHave = skills.filter((skill) => skill.importance === "must-have");
 
   const niceToHave = skills.filter((skill) => skill.importance === "nice-to-have");
