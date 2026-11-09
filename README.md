@@ -122,3 +122,5 @@ Reviewsume has no database and saves nothing: no accounts, no files, no history.
      - Lifting state up in React: why resume text lives in page.tsx, not InputPane
      - Debugging: the missing API key, VS Code's stale TypeScript errors, Windows file quirks
      Delete this comment when you're done. -->
+
+Building this project taught me to code effectively with AI and debug methodically, test features before release, and think about how real users move through an interface.
