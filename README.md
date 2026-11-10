@@ -7,7 +7,7 @@
 ## Features
 
 - **Match score (0–100)**: calculated in code from the skills the job asks for, so it's consistent and explainable rather than a number an AI made up.
-- **Skills to-do list**: missing must-have and nice-to-have skills, each with a concrete suggestion for how to gain or demonstrate it. Hover a skill you already have to see the line in your resume that proves it.
+- **Skills to-do list**: missing must-have and nice-to-have skills, each with specific advice. *Quick wins* point to experience already on your resume that just needs rewording; *build something* items suggest one small, concrete project. Hover a skill you already have to see the line in your resume that proves it.
 - **Weak bullet rewrites**: vague or off-target bullets shown next to an improved version. Rewrites never invent numbers; they use highlighted placeholders like `[X%]` for you to fill in.
 - **Keyword check**: which of the posting's keywords appear on your resume, matched literally the way ATS software does.
 - **PDF and DOCX upload**, with an editable text box so you can fix extraction problems or paste your resume instead.
@@ -23,22 +23,22 @@ Browser ── resume file ──► /api/parse ── PDF (unpdf) / DOCX (mammo
    │
    └── resume text + job description ──► /api/review
                                             │
-          job description ──► 1. extract requirements ──► 2. match skills ──┐
-                                                                            ├──► score + results
-          resume + job description ──► 3. review bullets ───────────────────┘
+          job description ──► 1. extract requirements ──► 2. match skills ──► 3. review bullets
+                                                                                  │
+                                                                         score + results
 ```
 
 1. **Extract requirements**: OpenAI reads the job description and returns must-have skills, nice-to-have skills and ATS keywords.
 2. **Match skills**: OpenAI checks the resume for each skill, accepting synonyms ("JS" counts for "JavaScript"), and quotes the evidence.
-3. **Review bullets**: runs at the same time as steps 1–2 (`Promise.all`), which makes a review about a third faster.
+3. **Review bullets**: runs after step 2 and is told which skills the resume already proves, so it never calls a bullet weak for "missing" something shown elsewhere, and its rewrites can name those proven skills. It only flags bullets that are vague or hide a relevant skill; it's allowed to flag none.
 4. **Score** in plain TypeScript:
    `70 × (must-haves found ÷ total) + 30 × (nice-to-haves found ÷ total)`. If a posting has no nice-to-haves, must-haves count for the full 100, and vice versa.
 
 ### Design decisions
 
 - **Structured output with zod.** Every OpenAI call uses a zod schema that becomes a strict JSON Schema. The model must return valid, typed data, and the same schema gives TypeScript types for the UI.
-- **The code doesn't blindly trust the model.** Skills the model skips count as missing instead of vanishing from the score. "Original" bullets that don't appear in the resume are thrown out. Duplicate skills are merged.
-- **Keywords are matched by code, not AI.** ATS software looks for exact words, so Reviewsume does too: whole-word and case-insensitive, so "Java" doesn't match "JavaScript" and "C" doesn't match "C++".
+- **The code doesn't blindly trust the model.** Skills the model skips count as missing instead of vanishing from the score. "Original" bullets that don't appear in the resume are thrown out, and so are "rewrites" that barely change the original (over 80% the same words). Duplicate skills are merged.
+- **Keywords are matched by code, not AI.** ATS software looks for exact words, so Reviewsume does too: whole-word and case-insensitive, so "Java" doesn't match "JavaScript" and "C" doesn't match "C++", while version numbers still count ("HTML" matches "HTML5").
 - **Honest rewrites.** The prompt forbids invented metrics, tools or outcomes, and asks for placeholders instead.
 - **Prompt-injection guard.** The resume and job description are wrapped in tags, and the model is told to treat them as data, so a posting saying "ignore your instructions" has no effect.
 - **The API key stays on the server.** It lives in `.env.local` (git-ignored), is only read by server code, and `server-only` makes the build fail if browser code ever imports the OpenAI client.

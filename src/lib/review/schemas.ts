@@ -34,6 +34,14 @@ export const JobRequirementsSchema = z.object({
 });
 export type JobRequirements = z.infer<typeof JobRequirementsSchema>;
 
+/**
+ * How to close a skill gap:
+ * - "show-existing": the resume has related experience that just doesn't name the skill (a quick reword)
+ * - "build-new": nothing related yet, so make something small that proves it
+ */
+export const SuggestionTypeSchema = z.enum(["show-existing", "build-new"]);
+export type SuggestionType = z.infer<typeof SuggestionTypeSchema>;
+
 /** Call 2: check the resume for each skill found in call 1. */
 export const SkillMatchesSchema = z.object({
   matches: z.array(
@@ -41,6 +49,7 @@ export const SkillMatchesSchema = z.object({
       skill: z.string(),
       found: z.boolean(),
       evidence: z.string().nullable(),
+      suggestionType: SuggestionTypeSchema.nullable(),
       suggestion: z.string().nullable(),
     })
   ),
@@ -75,6 +84,8 @@ export type SkillResult = {
   found: boolean;
   /** Short quote from the resume proving the skill (only when found). */
   evidence: string | null;
+  /** Whether the gap is a quick reword or needs new work (only when missing). */
+  suggestionType: SuggestionType | null;
   /** How to gain or show the skill (only when missing). Feeds the to-do list. */
   suggestion: string | null;
 };

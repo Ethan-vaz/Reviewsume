@@ -46,12 +46,24 @@ function SkillGroup({ title, skills }: { title: string; skills: SkillResult[] })
     <div>
       <h3 className="mb-2 text-sm font-semibold">{title}</h3>
       <ul className="space-y-2">
-        {skills.map((skill) => (
+        {quickWinsFirst(skills).map((skill) => (
           <li
             key={skill.name}
             className="rounded-md border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-800"
           >
-            <p className="text-sm font-medium">☐ {skill.name}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-medium">☐ {skill.name}</p>
+              {skill.suggestionType === "show-existing" && (
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  Quick win: reword
+                </span>
+              )}
+              {skill.suggestionType === "build-new" && (
+                <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+                  Build something
+                </span>
+              )}
+            </div>
             {skill.suggestion && (
               <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{skill.suggestion}</p>
             )}
@@ -60,4 +72,10 @@ function SkillGroup({ title, skills }: { title: string; skills: SkillResult[] })
       </ul>
     </div>
   );
+}
+
+/** Put "you already have this, just reword it" items before "build something new" ones. */
+function quickWinsFirst(skills: SkillResult[]): SkillResult[] {
+  const rank = (s: SkillResult) => (s.suggestionType === "show-existing" ? 0 : 1);
+  return [...skills].sort((a, b) => rank(a) - rank(b));
 }

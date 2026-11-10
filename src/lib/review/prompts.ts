@@ -27,44 +27,58 @@ ${DATA_NOTE}
 `.trim();
 
 export const MATCH_SKILLS_PROMPT = `
-You check whether a resume demonstrates each skill in a list.
+You check whether a resume demonstrates each skill in a list, and give constructive advice for the ones it doesn't.
+
+Read the WHOLE resume first, including experience, projects, education and skills sections.
 
 Return exactly one entry per skill, in the same order, with "skill" copied exactly as given.
 
-- found: true if the resume clearly shows the skill. Count synonyms, abbreviations and more specific versions (e.g. "JS" counts for "JavaScript", "PostgreSQL" counts for "SQL"), and skills strongly implied by the work described. false if the skill is absent or only loosely related.
+- found: true if the resume clearly shows the skill. Count synonyms, abbreviations and more specific versions (e.g. "JS" counts for "JavaScript", "PostgreSQL" counts for "SQL", "HTML5" counts for "HTML"), and skills strongly implied by the work described. A skill listed in a skills section counts as found. false if the skill is absent or only loosely related.
 - evidence: if found, a short exact quote from the resume (at most 15 words) that shows the skill. Otherwise null.
-- suggestion: if not found, one concrete, practical sentence on how this person could gain or demonstrate the skill (e.g. a small project, a course, a certification), tailored to their background. Otherwise null.
+- suggestionType and suggestion: only when found is false (otherwise both null). Pick ONE type:
+  - "show-existing": the resume describes work that probably involved this skill but never names it. Example: a POS or front-desk job for "technical troubleshooting", a class project for "teamwork in agile teams", SQL coursework for "data management". The suggestion names that specific experience from the resume and says how to word it so the skill is visible, e.g. "Your SQL coursework likely involved designing tables: add a bullet such as 'Designed a [N]-table database for [project]' under Projects."
+  - "build-new": nothing in the resume is related. The suggestion is ONE small, concrete thing this person could make in a few days to a few weeks that gives them a resume line, tied to what this employer does. Name the deliverable, e.g. "Build a one-page Wix site for a local gym with a class schedule and a sign-up form, then add it under Projects with a link."
 
-Be strict but fair: a skill listed in a skills section counts as found.
+Never give generic advice such as "take a course on X", "learn X", "gain experience with X", "practice X" or "familiarize yourself with X". Only mention a course or certification when the job description explicitly asks for that certification. Keep each suggestion to one or two sentences.
 
 ${DATA_NOTE}
 `.trim();
 
 export const REVIEW_BULLETS_PROMPT = `
-You review the bullet points of a resume against a job description.
+You find the few resume bullet points whose rewording would most improve this resume for this job.
 
 A bullet is a line describing work, projects or achievements, usually under experience, projects or volunteering. Ignore headings, contact details, skill lists and plain education lines.
 
-Flag a bullet as weak when it has one or both of these issues:
-- "vague": generic or unclear wording that doesn't say what was done or what came of it, e.g. "Helped with various projects", "Responsible for testing", "Worked on new features".
-- "off-target": it doesn't connect to what this job is looking for, even though it could be reframed to highlight relevant skills the work plausibly involved.
+You are given:
+- <job_description>: the job.
+- <skills_on_resume>: skills from the job that the resume ALREADY demonstrates, each with a quote as evidence.
+- <resume>: the full resume.
 
-Do not flag bullets that are already specific and relevant. If none are weak, return an empty list.
+Most resumes have between 0 and 4 bullets worth changing. Returning an empty list is a good answer when the bullets are already solid. Do not look for something to flag.
 
-Bullets from unrelated jobs (e.g. retail, hospitality) are fine to keep on a resume. Only flag them as "off-target" when they hide a genuinely relevant skill that could be brought out honestly (e.g. using software, working with data, troubleshooting, training others). Pay most attention to bullets from relevant experience and projects.
+Flag a bullet only when it clearly has one of these issues:
+- "vague": it doesn't say what was done or what came of it, e.g. "Helped with various projects", "Responsible for testing", "Worked on new features".
+- "off-target": the work it describes plausibly involved a skill this job asks for, but the wording hides it. Example for an IT support job: "Handled guest complaints at the front desk" hides troubleshooting under pressure.
+
+Never flag a bullet:
+- only because it comes from an unrelated job such as retail or hospitality. Unrelated experience is normal, especially for students, and is fine to keep as it is.
+- that is already specific (says what was done, with what, and ideally a result), even if you would phrase it differently. Do not flag bullets to make small style changes.
+- if your rewrite would say essentially the same thing.
 
 For every flagged bullet return:
 - original: the bullet copied exactly as it appears in the resume, without the bullet symbol.
 - issues: "vague", "off-target", or both.
-- explanation: one sentence on why it is weak.
-- rewrite: one improved bullet that starts with a strong action verb, says specifically what was done and why it mattered, and uses the job description's terminology where it is truthful.
+- explanation: one sentence specific to this bullet. Never claim the resume lacks a skill that appears in <skills_on_resume> or anywhere else in the resume.
+- rewrite: one improved bullet. Start with a strong action verb, say concretely what was done, with what, and the result.
 
 Honesty rules for rewrites (most important):
 - Never invent numbers, metrics, team sizes, technologies or outcomes that are not in the resume.
-- Where a number would make the bullet stronger, insert a placeholder in square brackets for the person to fill in, e.g. "[X%]", "[N users]", "[timeframe]".
-- Only mention a tool or skill if the resume suggests the person used it. Otherwise use a placeholder such as "[tool]".
+- Where a number would make the bullet stronger, insert a placeholder in square brackets for the person to fill in, e.g. "[X%]", "[N customers]", "[timeframe]".
+- You may name a skill from <skills_on_resume> when this bullet's work plausibly used it. Never add a skill the resume doesn't show; use a placeholder such as "[tool]" instead.
 
-The rewrite must itself be specific: describe what was actually done and its result. Never use filler such as "demonstrating", "showcasing", "illustrating", "skills transferable to" or "applicable to software development".
+Write plainly. Never use filler such as "demonstrating", "showcasing", "ensuring operational efficiency", "fast-paced environment", "attention to detail", "skills transferable to" or "productive environment".
+Bad rewrite: "Collaborated with management to track inventory levels, ensuring operational efficiency in a fast-paced environment."
+Good rewrite: "Counted and logged weekly stock for [N] product lines, flagging low items to management to prevent shortages."
 
 ${DATA_NOTE}
 `.trim();

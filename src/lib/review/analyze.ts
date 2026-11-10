@@ -26,21 +26,19 @@ import { computeScore } from "./score";
 /**
  * Review a resume against a job description.
  *
- *   job description ──► 1. extract requirements ──► 2. match skills ──┐
- *                                                                     ├──► result
- *   resume + job description ──► 3. review bullets ───────────────────┘
+ *   job description ──► 1. extract requirements ──► 2. match skills ──► 3. review bullets ──► result
  *
- * Step 3 doesn't depend on steps 1–2, so it runs at the same time (Promise.all),
- * which makes the whole review roughly a third faster.
+ * Step 3 runs AFTER step 2 on purpose: it's told which skills the resume already
+ * shows, so it doesn't call a bullet weak for "missing" something that's elsewhere
+ * on the resume, and it can name those proven skills in its rewrites.
+ * (An earlier version ran it in parallel: faster, but the feedback was worse.)
  */
 export async function reviewResume(
   resumeText: string,
   jobDescription: string
 ): Promise<ReviewResult> {
-  const [{ requirements, skills }, weakBullets] = await Promise.all([
-    analyzeSkills(resumeText, jobDescription),
-    reviewBullets(resumeText, jobDescription),
-  ]);
+  const { requirements, skills } = await analyzeSkills(resumeText, jobDescription);
+  const weakBullets = await reviewBullets(resumeText, jobDescription, skills);
 
   return {
     jobTitle: requirements.jobTitle,
@@ -125,6 +123,7 @@ async function analyzeSkills(resumeText: string, jobDescription: string) {
       importance,
       found,
       evidence: found ? (match?.evidence ?? null) : null,
+      suggestionType: found ? null : (match?.suggestionType ?? null),
       suggestion: found ? null : (match?.suggestion ?? null),
     };
   });
@@ -158,10 +157,13 @@ export function matchKeywords(keywords: string[], resumeText: string): KeywordRe
   const resume = resumeText.toLowerCase().replace(/\s+/g, " ");
   return keywords.map((term) => {
     const needle = escapeRegExp(term.toLowerCase().replace(/\s+/g, " "));
-    // "Whole word" here means no letter, digit, "+" or "#" right before or after the term,
-    // so "Java" doesn't match "JavaScript" and "C" doesn't match "C++" or "C#".
+    // "Whole word" here means:
+    //   before the term: no letter, digit, "+" or "#"
+    //   after the term:  no letter, "#" or "++"
+    // So "Java" doesn't match "JavaScript" and "C" doesn't match "C++" or "C#",
+    // but version numbers are fine: "HTML" matches "HTML5", "ES6" matches "ES6+".
     // \b isn't used because it breaks on terms like "C++" or ".NET".
-    const pattern = new RegExp(`(?<![a-z0-9+#])${needle}(?![a-z0-9+#])`);
+    const pattern = new RegExp(`(?<![a-z0-9+#])${needle}(?![a-z#]|\\+\\+)`);
     return { term, found: pattern.test(resume) };
   });
 }
@@ -170,20 +172,51 @@ export function matchKeywords(keywords: string[], resumeText: string): KeywordRe
 // Step 3: weak bullets and rewrites
 // ─────────────────────────────────────────────────────────────
 
-async function reviewBullets(resumeText: string, jobDescription: string): Promise<WeakBullet[]> {
+async function reviewBullets(
+  resumeText: string,
+  jobDescription: string,
+  skills: SkillResult[]
+): Promise<WeakBullet[]> {
+  // Tell the model what step 2 already proved, with the evidence quotes.
+  const skillsOnResume = skills
+    .filter((s) => s.found)
+    .map((s) => `- ${s.name}${s.evidence ? `: "${s.evidence}"` : ""}`)
+    .join("\n");
+
   const { weakBullets } = await askForJson(
     BulletReviewSchema,
     "bullet_review",
     REVIEW_BULLETS_PROMPT,
-    `<job_description>\n${jobDescription}\n</job_description>\n\n<resume>\n${resumeText}\n</resume>`
+    `<job_description>\n${jobDescription}\n</job_description>\n\n` +
+      `<skills_on_resume>\n${skillsOnResume || "(none)"}\n</skills_on_resume>\n\n` +
+      `<resume>\n${resumeText}\n</resume>`
   );
 
-  // Safety check: only keep bullets that really exist in the resume.
-  // Models occasionally paraphrase or invent an "original", which would confuse the user.
   const resume = looseText(resumeText);
   return weakBullets.filter(
-    (b) => b.issues.length > 0 && b.rewrite.trim() !== "" && resume.includes(looseText(b.original))
+    (b) =>
+      b.issues.length > 0 &&
+      b.rewrite.trim() !== "" &&
+      // Only keep bullets that really exist in the resume.
+      // Models occasionally paraphrase or invent an "original", which would confuse the user.
+      resume.includes(looseText(b.original)) &&
+      // Drop "rewrites" that barely change anything. This is what happens when a bullet
+      // is already good (e.g. you pasted in an earlier suggestion) but the model flags it anyway.
+      wordOverlap(b.original, b.rewrite) < 0.8
   );
+}
+
+/**
+ * How similar two sentences are, from 0 (no words in common) to 1 (same words).
+ * Counts shared words relative to all distinct words used (Jaccard similarity).
+ */
+export function wordOverlap(a: string, b: string): number {
+  const wordsA = new Set(looseText(a).split(" ").filter(Boolean));
+  const wordsB = new Set(looseText(b).split(" ").filter(Boolean));
+  if (wordsA.size === 0 && wordsB.size === 0) return 1;
+  let shared = 0;
+  for (const word of wordsA) if (wordsB.has(word)) shared++;
+  return shared / (wordsA.size + wordsB.size - shared);
 }
 
 // ─────────────────────────────────────────────────────────────
